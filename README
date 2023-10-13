@@ -1,0 +1,5 @@
+# VCC
+
+VCC is a under-development toy C compiler.
+
+I develop this compiler with careful learning from [chibicc](https://github.com/rui314/chibicc)
