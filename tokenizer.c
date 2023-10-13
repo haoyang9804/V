@@ -4,28 +4,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "tokenizer.h"
 
-typedef enum { TKOP, TKINTEGER, TKEOF } TokenKind;
+char *_tokenizer_code_head;
 
-typedef struct Token Token;
-
-struct Token {
-  int val;
-  char op;
-  Token *next;
-  TokenKind kind;
-};
-
-Token *generate_token(Token *cur_token, TokenKind kind) {
+Token *_generate_token(Token *cur_token, TokenKind kind) {
   Token *new_token = malloc(sizeof(Token));
   new_token->kind = kind;
   cur_token->next = new_token;
   return new_token;
 }
 
-void error(char *fmt, ...) {
+void _error_at(char *cur_code, char *fmt, ...) {
   va_list ag;
   va_start(ag, fmt);
+  fprintf(stderr, "%s\n", _tokenizer_code_head);
+  fprintf(stderr, "%*s^ ", (int)(cur_code - _tokenizer_code_head), "");
   vfprintf(stderr, fmt, ag);
   fprintf(stderr, "\n");
   va_end(ag);
@@ -35,54 +29,80 @@ void error(char *fmt, ...) {
 Token *tokenizer(char *code) {
   Token head = {};
   Token *cur_token = &head;
+  _tokenizer_code_head = code;
   while (*code) {
     if (isspace(*code)) {
       code++;
       continue;
     } else if (*code == '+' || *code == '-') {
-      cur_token = generate_token(cur_token, TKOP);
-      cur_token->op = *code;
+      cur_token = _generate_token(cur_token, TKOP);
+      cur_token->code = code;
       code++;
     } else if (isdigit(*code)) {
-      cur_token = generate_token(cur_token, TKINTEGER);
+      cur_token = _generate_token(cur_token, TKINTEGER);
+      cur_token->code = code; 
       cur_token->val = strtol(code, &code, 10);
-    } else
-      error("Cannot decode this code: %c\n", *code);
+    } else {
+      _error_at(code, "Cannot tokenize this code: %c\n", *code);
+    }
   }
-  cur_token = generate_token(cur_token, TKEOF);
+  cur_token = _generate_token(cur_token, TKEOF);
   return head.next;
 }
 
-bool at_eof(Token *token) { return token->kind == TKEOF; }
-
-char *stringtify(Token *head) {
-  char str[1000] = ""; // can only handle 1000 characters
-  while (!at_eof(head)) {
-    printf("%d\n", head->kind);
-    switch (head->kind) {
-    case TKINTEGER:
-      strcat(str, "[INTEGER]");
-      char *int_str =
-          malloc(sizeof(char) * 10); // can only handle 10-digit integer
-      sprintf(int_str, "%d", head->val);
-      strcat(str, int_str);
-      break;
-    case TKOP:
-      strcat(str, "[OP]");
-      strncat(str, &head->op, 1);
-      break;
-    default:
-      error("WTF!");
-    }
-    head = head->next;
-  }
-  char *ret = str;
-  return ret;
+bool _at_end(Token *token) {
+  return token->kind == TKEOF;
 }
 
-int main(int argc, char **argv) {
-  if (argc != 2)
-    error("Oh no..., there are/is %d argument(s)", argc);
-  Token *token_head = tokenizer(argv[1]);
-  printf("Token stream: %s\n", stringtify(token_head));
+bool _next_is_op(Token* token, char op) {
+  if (token->next->kind == TKOP && token->next->code[0] == op) {
+    return true;
+  }
+  return false;
+}
+
+bool _next_is_integer(Token* token) {
+  if (token->next->kind == TKINTEGER) {
+    return true;
+  }
+  return false;
+}
+
+bool _is_op(Token* token) {
+  return token->kind == TKOP;
+}
+
+bool _is_integer(Token* token) {
+  return token->kind == TKINTEGER;
+}
+
+void _eat(Token** token) {
+  *token = (*token)->next;
+}
+
+void _eat_op(Token **token) {
+  if (!_is_op(*token)) {
+    _error_at((*token)->code, "Expect an operator");
+  }
+  _eat(token);
+}
+
+void _eat_integer(Token **token) {
+  if (!_is_integer(*token)) {
+    _error_at((*token)->code, "Expect an integer");
+  }
+  _eat(token);
+}
+
+void check(Token *token) {
+  _eat_integer(&token); 
+  while(!_at_end(token)) {
+    _eat_op(&token);
+    if (_at_end(token)) {
+      _error_at(token->code, "Expect an integer");
+    }
+    else {
+      _eat_integer(&token);
+    }
+  }
 }
