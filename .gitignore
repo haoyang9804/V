@@ -1,2 +1,5 @@
 vcc
 *.o
+.vscode
+*.dot
+*.svg
