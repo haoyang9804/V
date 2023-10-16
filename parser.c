@@ -7,13 +7,37 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*! \brief A LL(k) parser*/
+/*! \brief A LL(1) parser*/
+
 
 /**
- * S -> Expr
- * Expr -> MD ("+" MD | "-" MD)*
- * MD -> AS ("*" AS | "/" AS)*
- * AS ->"(" Expr ")" | num
+ * ADD_SUB -> ADD_SUB "+" MUL_DIV
+ *          | ADD_SUB "-" MUL_DIV
+ *          | MUL_DIV;
+ * MUL_DIV -> MUL_DIV "*" UNARY
+ *          | MUL_DIV "/" UNARY
+ *          | UNARY;
+ * UNARY -> "+" UNARY
+ *        | "-" UNARY
+ *        | NUMBER_BRACKET;
+ * NUMBER_BRACKET -> number
+ *                 | "(" ADD_SUB ")"  
+ */
+
+/**
+ * S -> ADD_SUB MUL_DIV'
+ * MUL_DIV' -> "-" MUL_DIV | ""
+ * MUL_DIV = UNARY ("*" UNARY | "/" UNARY)*
+ * UNARY = ("+" | "-")? UNARY | NUMBER_BRACKET
+ * NUMBER_BRACKET = number | "(" ADD_SUB ")"
+ */
+
+/**
+ * S -> ADD_SUB
+ * ADD_SUB = MUL_DIV "+" ADD_SUB | MUL_DIV
+ * MUL_DIV = NUMBER_BRACKET * MUL_DIV | NUMBER_BRACKET
+ * NUMBER_BRACKET = number | "(" ADD_SUB ")"
+ * 
  */
 
 Node *root;
@@ -34,6 +58,14 @@ static int _at_end_k(int k) {
 // check the current token
 
 static bool _is_op() { return token->kind == TK_PUNC; }
+
+static bool _is_plus() {
+  return _is_op() && token->code[0] == '+';
+}
+
+static bool _is_minus() {
+  return _is_op() && token->code[0] == '-';
+}
 
 static bool _is_integer() { return token->kind == TK_INTEGER; }
 
@@ -146,7 +178,13 @@ static Node *_new_binary(NodeKind kind, Node *left, Node *right) {
   return root;
 }
 
+
+// Automata
+
 static Node *_add_or_sub();
+static Node *_num_or_bracket();
+static Node *_mul_or_div();
+static Node *_unary();
 
 static Node *_num_or_bracket() {
   Node *node;
@@ -164,13 +202,28 @@ static Node *_num_or_bracket() {
   return node;
 }
 
+
+
+static Node *_unary() {
+  if (_is_plus()) {
+    _eat(); // eat the +
+    return _unary();
+  }
+  if (_is_minus()) {
+    _eat(); // eat the -
+    return _new_binary(ND_SUB, _new_number_node(0), _unary());
+  }
+  return _num_or_bracket();
+  
+}
+
 static Node *_mul_or_div() {
-  Node *node = _num_or_bracket();
+  Node *node = _unary();
   while (!_at_end()) {
     if (lookahead(1, "*")) {
-      node = _new_binary(ND_MUL, node, _num_or_bracket());
+      node = _new_binary(ND_MUL, node, _unary());
     } else if (lookahead(1, "/")) {
-      node = _new_binary(ND_DIV, node, _num_or_bracket());
+      node = _new_binary(ND_DIV, node, _unary());
     } else {
       break;
     }
