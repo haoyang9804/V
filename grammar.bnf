@@ -11,16 +11,30 @@ UNARY ::= "+" UNARY
 NUMBER_BRACKET ::= number
                 | "(" ADD_SUB ")";  
 
-# NOn-left-recursive 1
+# Non-left-recursive 1
 
 ADD_SUB ::= MUL_DIV ADD_SUB_;
-ADD_SUB_ ::= "+" MUL_DIV
-           | "-" MUL_DIV
+ADD_SUB_ ::= "+" MUL_DIV ADD_SUB_
+           | "-" MUL_DIV ADD_SUB_
            | none;
 MUL_DIV ::= UNARY MUL_DIV_;
-MUL_DIV_ ::= "*" UNARY
-          | "/" UNARY
+MUL_DIV_ ::= "*" UNARY MUL_DIV_
+          | "/" UNARY MUL_DIV_
           | none;
+UNARY ::= "+" UNARY
+        | "-" UNARY
+        | NUMBER_BRACKET;
+NUMBER_BRACKET ::= number
+                | "(" ADD_SUB ")";
+
+## Non-left-recursive 2
+
+ADD_SUB ::= MUL_DIV "+" ADD_SUB
+          | MUL_DIV "-" ADD_SUB
+					| MUL_DIV;
+MUL_DIV ::= UNARY "*" MUL_DIV;
+					| UNARY "/" MUL_DIV;
+					| UNARY;
 UNARY ::= "+" UNARY
         | "-" UNARY
         | NUMBER_BRACKET;

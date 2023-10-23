@@ -1,4 +1,4 @@
-#include "ASTVisualizer.h"
+#include "ASTVisualizer_play.h"
 #include "vcc.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@ static void _write_a_seg(char *str) { fprintf(fp, "%s ", str); }
 
 static void _write(char *str) { fprintf(fp, "%s", str); }
 
-static char *_get_node_content(Node *node) {
+static char *_get_node_content(Node_ *node) {
   if (node->kind == ND_NUM) {
     // support integer now, so the length is 10
     char *snum = calloc(sizeof(char), 10);
@@ -27,7 +27,7 @@ static char *_get_node_content(Node *node) {
   return snum;
 }
 
-static char *_node_var_name(Node *node) {
+static char *_node_var_name(Node_ *node) {
   // Suppose the number of AST node will not be over 1e10-1;
   char *node_str = calloc(sizeof(char), 16);
   strcpy(node_str, "node");
@@ -44,14 +44,14 @@ static void _graphviz_arrow_code(char *name_from, char *name_to) {
   _write_a_line(";");
 }
 
-static void _graphviz_declare_code(Node *node, char *name_str) {
+static void _graphviz_declare_code(Node_ *node, char *name_str) {
   _write_a_seg(name_str);
   _write("[label=");
   _write(_get_node_content(node));
   _write_a_line("];");
 }
 
-static void _traverse_AST(Node *node, char *node_name) {
+static void _traverse_AST(Node_ *node, char *node_name) {
   _graphviz_declare_code(node, node_name);
   if (node->left) {
     char *left_node_name = _node_var_name(node->left);
@@ -67,12 +67,12 @@ static void _traverse_AST(Node *node, char *node_name) {
   }
 }
 
-void visualize() {
-  fp = fopen("AST.dot", "w");
+void visualize2() {
+  fp = fopen("AST2.dot", "w");
   _write_a_line("digraph G {");
-  Node *node = root;
+  Node_ *node = root_;
   _traverse_AST(node, _node_var_name(node));
   _write_a_line("}");
   fclose(fp);
-  system("dot -Tsvg AST.dot > AST.svg");
+  system("dot -Tsvg AST2.dot > AST2.svg");
 }

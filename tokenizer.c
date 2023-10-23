@@ -10,6 +10,7 @@
 
 char *code;
 Token *token;
+Token *token_;
 
 static Token *_generate_token(Token *cur_token, TokenKind kind) {
   Token *new_token = malloc(sizeof(Token));
@@ -45,5 +46,5 @@ void tokenizer(char *_code) {
     }
   }
   cur_token = _generate_token(cur_token, TK_EOF);
-  token = head.next;
+  token_ = token = head.next;
 }

@@ -7,39 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*! \brief A LL(1) parser*/
-
-
-/**
- * ADD_SUB -> ADD_SUB "+" MUL_DIV
- *          | ADD_SUB "-" MUL_DIV
- *          | MUL_DIV;
- * MUL_DIV -> MUL_DIV "*" UNARY
- *          | MUL_DIV "/" UNARY
- *          | UNARY;
- * UNARY -> "+" UNARY
- *        | "-" UNARY
- *        | NUMBER_BRACKET;
- * NUMBER_BRACKET -> number
- *                 | "(" ADD_SUB ")"  
- */
-
-/**
- * S -> ADD_SUB MUL_DIV'
- * MUL_DIV' -> "-" MUL_DIV | ""
- * MUL_DIV = UNARY ("*" UNARY | "/" UNARY)*
- * UNARY = ("+" | "-")? UNARY | NUMBER_BRACKET
- * NUMBER_BRACKET = number | "(" ADD_SUB ")"
- */
-
-/**
- * S -> ADD_SUB
- * ADD_SUB = MUL_DIV "+" ADD_SUB | MUL_DIV
- * MUL_DIV = NUMBER_BRACKET * MUL_DIV | NUMBER_BRACKET
- * NUMBER_BRACKET = number | "(" ADD_SUB ")"
- * 
- */
-
 Node *root;
 int node_num = 0;
 
@@ -116,13 +83,13 @@ static void _eat_integer() {
 /*! \brief look ahead the next k tokens, check if the tokens can be concatenated
  * into c*/
 
-bool lookahead(int k, char *c) {
+static bool lookahead(int k, char *c) {
   int siz = 0;
   Token *tmp_token = token;
   for (int i = 0; i < k; i++) {
     siz += tmp_token->len;
     tmp_token = tmp_token->next;
-    _expect_not_at_end();
+    if (_at_end(token_)) return false;
   }
   char text[siz + 1];
   int len = 0;
@@ -245,4 +212,4 @@ static Node *_add_or_sub() {
   return node;
 }
 
-void AST() { root = _add_or_sub(token); }
+void AST() { root = _add_or_sub(); }
