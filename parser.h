@@ -1,4 +1,4 @@
-// A parser for Non-left-recursive grammar 2
+// A parser for a Non-left-recursive grammar (in grammar.bnf)
 #pragma once
 
 #include "tokenizer.h"

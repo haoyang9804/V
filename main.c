@@ -1,7 +1,5 @@
 #include "ASTVisualizer.h"
-#include "ASTVisualizer_play.h"
 #include "parser.h"
-#include "parser_play.h"
 #include "tokenizer.h"
 #include <assert.h>
 
@@ -11,6 +9,4 @@ int main(int argc, char **argv) {
   tokenizer(code);
   AST();
   visualize();
-  AST2();
-  visualize2();
 }

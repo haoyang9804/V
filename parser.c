@@ -64,20 +64,10 @@ static void _expect_not_at_end() {
 
 // consumes a token
 
-static void _eat() { token = token->next; }
-
-static void _eat_op() {
-  if (!_is_op()) {
-    error_at(token->code, "Expect an operator");
-  }
-  _eat();
-}
-
-static void _eat_integer() {
-  if (!_is_integer()) {
-    error_at(token->code, "Expect an integer");
-  }
-  _eat();
+static void _eat() { 
+  Token *token_tmp = token;
+  token = token->next; 
+  free(token_tmp);
 }
 
 /*! \brief look ahead the next k tokens, check if the tokens can be concatenated
@@ -89,7 +79,7 @@ static bool lookahead(int k, char *c) {
   for (int i = 0; i < k; i++) {
     siz += tmp_token->len;
     tmp_token = tmp_token->next;
-    if (_at_end(token_)) return false;
+    if (_at_end(token)) return false;
   }
   char text[siz + 1];
   int len = 0;
