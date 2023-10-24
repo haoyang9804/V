@@ -47,22 +47,31 @@ static void _graphviz_arrow_code(char *name_from, char *name_to) {
 static void _graphviz_declare_code(Node *node, char *name_str) {
   _write_a_seg(name_str);
   _write("[label=");
-  _write(_get_node_content(node));
+  char *node_content = _get_node_content(node);
+  _write(node_content);
+  free(node_content);
   _write_a_line("];");
 }
 
 static void _traverse_AST(Node *node, char *node_name) {
   _graphviz_declare_code(node, node_name);
+  char *left_node_name, *right_node_name;
   if (node->left) {
-    char *left_node_name = _node_var_name(node->left);
+    left_node_name = _node_var_name(node->left);
     _graphviz_declare_code(node->left, left_node_name);
     _graphviz_arrow_code(node_name, left_node_name);
+    
+  }
+  if (node->right) {
+    right_node_name = _node_var_name(node->right);
+    _graphviz_declare_code(node->right, right_node_name);
+    _graphviz_arrow_code(node_name, right_node_name);
+  }
+  free(node_name);
+  if (node->left) {
     _traverse_AST(node->left, left_node_name);
   }
   if (node->right) {
-    char *right_node_name = _node_var_name(node->right);
-    _graphviz_declare_code(node->right, right_node_name);
-    _graphviz_arrow_code(node_name, right_node_name);
     _traverse_AST(node->right, right_node_name);
   }
 }

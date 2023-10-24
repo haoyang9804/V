@@ -126,6 +126,24 @@ static Node *_new_binary(NodeKind kind, Node *left, Node *right) {
   case ND_MUL:
     root->content.op = "*";
     break;
+  case ND_EQ:
+    root->content.op = "==";
+    break;
+  case ND_NE:
+    root->content.op = "!=";
+    break;
+  case ND_GE:
+    root->content.op = ">=";
+    break;
+  case ND_GT:
+    root->content.op = ">";
+    break;
+  case ND_LE:
+    root->content.op = "<=";
+    break;
+  case ND_LT:
+    root->content.op = "<";
+    break;
   default:
     break;
   }
@@ -138,16 +156,18 @@ static Node *_new_binary(NodeKind kind, Node *left, Node *right) {
 
 // Automata
 
-static Node *_add_or_sub();
-static Node *_num_or_bracket();
-static Node *_mul_or_div();
-static Node *_unary();
+static Node *_ADD_SUB();
+static Node *_NUMBER_BRACKET();
+static Node *_MUL_DIV();
+static Node *_UNARY();
+static Node *_COMPARE1();
+static Node *_COMPARE2();
 
-static Node *_num_or_bracket() {
+static Node *_NUMBER_BRACKET() {
   Node *node;
   if (_is_open_bracket()) {
     _eat(); // eat the open bracket
-    node = _add_or_sub();
+    node = _ADD_SUB();
     // check for the existence of the closed bracket
     _expect_closed_bracket();
     _eat(); // eat the closed bracket
@@ -161,26 +181,26 @@ static Node *_num_or_bracket() {
 
 
 
-static Node *_unary() {
+static Node *_UNARY() {
   if (_is_plus()) {
     _eat(); // eat the +
-    return _unary();
+    return _UNARY();
   }
   if (_is_minus()) {
     _eat(); // eat the -
-    return _new_binary(ND_SUB, _new_number_node(0), _unary());
+    return _new_binary(ND_SUB, _new_number_node(0), _UNARY());
   }
-  return _num_or_bracket();
+  return _NUMBER_BRACKET();
   
 }
 
-static Node *_mul_or_div() {
-  Node *node = _unary();
+static Node *_MUL_DIV() {
+  Node *node = _UNARY();
   while (!_at_end()) {
     if (lookahead(1, "*")) {
-      node = _new_binary(ND_MUL, node, _unary());
+      node = _new_binary(ND_MUL, node, _UNARY());
     } else if (lookahead(1, "/")) {
-      node = _new_binary(ND_DIV, node, _unary());
+      node = _new_binary(ND_DIV, node, _UNARY());
     } else {
       break;
     }
@@ -188,13 +208,13 @@ static Node *_mul_or_div() {
   return node;
 }
 
-static Node *_add_or_sub() {
-  Node *node = _mul_or_div();
+static Node *_ADD_SUB() {
+  Node *node = _MUL_DIV();
   while (!_at_end()) {
     if (lookahead(1, "+")) {
-      node = _new_binary(ND_ADD, node, _mul_or_div());
+      node = _new_binary(ND_ADD, node, _MUL_DIV());
     } else if (lookahead(1, "-")) {
-      node = _new_binary(ND_SUB, node, _mul_or_div());
+      node = _new_binary(ND_SUB, node, _MUL_DIV());
     } else {
       break;
     }
@@ -202,4 +222,44 @@ static Node *_add_or_sub() {
   return node;
 }
 
-void AST() { root = _add_or_sub(); }
+
+
+static Node *_COMPARE2() {
+  Node *node = _ADD_SUB();
+  while (!_at_end()) {
+    if (lookahead(2, "<=")) {
+      node = _new_binary(ND_LE, node, _ADD_SUB());
+    }
+    else if (lookahead(2, ">=")) {
+      node = _new_binary(ND_GE, node, _ADD_SUB());
+    }
+    else if (lookahead(1, "<")) {
+      node = _new_binary(ND_LT, node, _ADD_SUB());
+    }
+    else if (lookahead(1, ">")) {
+      node = _new_binary(ND_GT, node, _ADD_SUB());
+    }
+    else {
+      break;
+    }
+  }
+  return node;
+}
+
+static Node *_COMPARE1() {
+  Node *node = _COMPARE2();
+  while (!_at_end()) {
+    if (lookahead(2, "==")) {
+      node = _new_binary(ND_EQ, node, _COMPARE2());
+    }
+    else if (lookahead(2, "!=")) {
+      node = _new_binary(ND_NE, node, _COMPARE2());
+    }
+    else {
+      break;
+    }
+  }
+  return node;
+}
+
+void AST() { root = _COMPARE1(); }
