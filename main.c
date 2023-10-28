@@ -1,6 +1,7 @@
 #include "ASTVisualizer.h"
 #include "parser.h"
 #include "tokenizer.h"
+#include "codegen.hpp"
 #include <assert.h>
 
 int main(int argc, char **argv) {
@@ -9,4 +10,5 @@ int main(int argc, char **argv) {
   tokenizer(code);
   AST();
   visualize();
+  codegen();
 }

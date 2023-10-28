@@ -10,7 +10,7 @@
 Node *root;
 int node_num = 0;
 
-static bool _at_end() { return token->kind == TK_EOF; }
+static bool _at_end(Token *token_) { return token_->kind == TK_EOF; }
 
 static int _at_end_k(int k) {
   Token *token_copy = token;
@@ -37,21 +37,21 @@ static bool _is_minus() {
 static bool _is_integer() { return token->kind == TK_INTEGER; }
 
 static bool _is_open_bracket() {
-  return _is_op(token) && token->code[0] == '(';
+  return _is_op() && token->code[0] == '(';
 }
 
 static bool _is_closed_bracket() {
-  return _is_op(token) && token->code[0] == ')';
+  return _is_op() && token->code[0] == ')';
 }
 
 static void _expect_closed_bracket() {
-  if (!_is_closed_bracket(token)) {
+  if (!_is_closed_bracket()) {
     error_at(token->code, "Expect )");
   }
 }
 
 static void _expect_number() {
-  if (!_is_integer(token)) {
+  if (!_is_integer()) {
     error_at(token->code, "Expect a number");
   }
 }
@@ -196,7 +196,7 @@ static Node *_UNARY() {
 
 static Node *_MUL_DIV() {
   Node *node = _UNARY();
-  while (!_at_end()) {
+  while (!_at_end(token)) {
     if (lookahead(1, "*")) {
       node = _new_binary(ND_MUL, node, _UNARY());
     } else if (lookahead(1, "/")) {
@@ -210,7 +210,7 @@ static Node *_MUL_DIV() {
 
 static Node *_ADD_SUB() {
   Node *node = _MUL_DIV();
-  while (!_at_end()) {
+  while (!_at_end(token)) {
     if (lookahead(1, "+")) {
       node = _new_binary(ND_ADD, node, _MUL_DIV());
     } else if (lookahead(1, "-")) {
@@ -226,7 +226,7 @@ static Node *_ADD_SUB() {
 
 static Node *_COMPARE2() {
   Node *node = _ADD_SUB();
-  while (!_at_end()) {
+  while (!_at_end(token)) {
     if (lookahead(2, "<=")) {
       node = _new_binary(ND_LE, node, _ADD_SUB());
     }
@@ -248,7 +248,7 @@ static Node *_COMPARE2() {
 
 static Node *_COMPARE1() {
   Node *node = _COMPARE2();
-  while (!_at_end()) {
+  while (!_at_end(token)) {
     if (lookahead(2, "==")) {
       node = _new_binary(ND_EQ, node, _COMPARE2());
     }
