@@ -1,0 +1,4 @@
+# TODO
+
+1. some memory leak :(
+2. The use of sbrk and brk in memory management is too coarse-grained.
